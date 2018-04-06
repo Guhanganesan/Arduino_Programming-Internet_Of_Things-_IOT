@@ -1,0 +1,25 @@
+#include<LiquidCrystal.h>
+LiquidCrystal lcd(12,11,5,4,3,2);
+
+void setup()
+{
+  lcd.begin(16,2);
+  Serial.begin(9600);
+  pinMode(A0,INPUT);
+}
+void loop()
+{
+  int a = analogRead(A0);
+  lcd.setCursor(16,1);
+  lcd.print("Guhan");
+  lcd.scrollDisplayLeft();
+/*  if(a>100)
+  {
+    lcd.setCursor(16,2);
+    lcd.print(a);
+    Serial.println(a);
+  }*/
+  
+  delay(500);
+  
+}

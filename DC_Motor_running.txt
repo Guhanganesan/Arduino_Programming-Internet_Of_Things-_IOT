@@ -1,0 +1,50 @@
+#include<AFMotor.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial BT(0,1); //TX, RX respetively
+String readvoice;
+
+
+AF_DCMotor  motor1(1);
+
+AF_DCMotor  motor2(2);
+
+void setup() {
+ BT.begin(9600);
+ Serial.begin(9600);
+
+ 
+motor1.setSpeed(225);
+motor2.setSpeed(225);
+}
+
+void loop() { 
+  while (BT.available())
+  {  //Check if there is an available byte to read
+  delay(10); //Delay added to make thing stable 
+  char c = BT.read(); //Conduct a serial read
+  readvoice += c; //build the string- "forward", "reverse", "left" and "right"
+  }  
+  if (readvoice.length() > 0) {
+    Serial.println(readvoice); 
+
+  if(readvoice == "forward")
+  {motor1.run(FORWARD);
+   motor2.run(FORWARD);
+  }
+  else if(readvoice == "backward")
+  {motor1.run(BACKWARD);
+   motor2.run(BACKWARD);
+  }
+  else if(readvoice == "right")
+  {motor1.run(RELEASE);
+  motor2.run(FORWARD);
+  }
+  else if(readvoice == "left")
+  {motor2.run(RELEASE);
+  motor1.run(FORWARD);}
+  else if(readvoice == "stop")
+  {motor1.run(RELEASE);
+  motor2.run(RELEASE);}
+    readvoice="";}} //Reset the variable
+  

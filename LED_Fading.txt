@@ -1,0 +1,21 @@
+void setup()
+{
+  pinMode(8,OUTPUT);
+  Serial.begin(9600);
+}
+void loop()
+{
+  int m=0;
+  for(m=0;m<=255;m+=10)
+  {
+    digitalWrite(8,m);
+    Serial.println(m);
+    delay(200);
+  }
+  for(m=255;m>=0;m-=10)
+  {
+    digitalWrite(8,m);
+    Serial.println(m);
+    delay(200);
+  }
+}
