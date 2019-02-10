@@ -3,7 +3,7 @@
 const char* ssid = "infocus";
 const char* password = "hariharan";
  
-int ledPin = 16; // GPIO13
+int ledPin = 16; // GPIO13 that is D0 pin
 WiFiServer server(80);
  
 void setup() {
