@@ -1,0 +1,119 @@
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+#include "HX711.h" 
+
+#define TRIGGER_PIN 5  //D1
+#define ECHO_PIN 4     //D2
+
+#define DOUT  0 //D3
+#define CLK  12 //D6
+ 
+HX711 scale(DOUT, CLK);
+float calibration_factor  =-96650;
+
+
+const char* ssid = "infocus";
+const char* password = "hariharan";
+
+ESP8266WebServer server(80);   
+
+String page = "";
+long distance; 
+float w; 
+void setup(void){
+
+
+//pinMode(DT_PIN, OUTPUT);
+//pinMode(SCK_PIN, INPUT);
+  
+  Serial.begin(115200);
+  
+  scale.set_scale();
+  scale.tare(); //Reset the scale to 0
+ 
+  long zero_factor = scale.read_average(); //Get a baseline reading
+  Serial.print("Zero factor: "); //This can be used to remove the need to tare the scale. Useful in permanent scale projects.
+  Serial.println(zero_factor);
+  
+
+  pinMode(TRIGGER_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  WiFi.begin(ssid, password); //begin WiFi connection
+  Serial.println("");
+  
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  server.on("/", [](){
+    page = "<h1>An IOT based smart kitchen</h1><h3>Distance is :</h3> <h4>"+String(distance)+" cm</h4>"+"<h3>Weight is :</h3> <h4>"+String(w)+"Kgm</h4>";
+    server.send(200, "text/html", page);
+  });
+  
+  server.begin();
+  Serial.println("Web server started!");
+}
+ 
+void loop(void){
+
+  scale.set_scale(calibration_factor); //Adjust to this calibration factor
+  delay(2000);
+  Serial.print("Reading: ");
+  
+  
+  w = scale.get_units(), 3;
+  uint16_t weight = w * 10;
+
+
+  Serial.print(scale.get_units(), 3);
+  Serial.print(" kg"); //Change this to kg and re-adjust the calibration factor if you follow SI units like a sane person
+  Serial.print(" calibration_factor: ");
+  Serial.print(calibration_factor);
+  Serial.println();
+ 
+  if(Serial.available())
+  {
+    char temp = Serial.read();
+    if(temp == '+' || temp == 'a')
+      calibration_factor += 10;
+    else if(temp == '-' || temp == 'z')
+      calibration_factor -= 10;
+    else if(temp == 's')
+      calibration_factor += 100;  
+    else if(temp == 'x')
+      calibration_factor -= 100;  
+    else if(temp == 'd')
+      calibration_factor += 1000;  
+    else if(temp == 'c')
+      calibration_factor -= 1000;
+    else if(temp == 'f')
+      calibration_factor += 10000;  
+    else if(temp == 'v')
+      calibration_factor -= 10000;  
+    else if(temp == 't')
+      scale.tare();  //Reset the scale to zero
+  }
+
+  
+ 
+  long duration;
+  digitalWrite(TRIGGER_PIN, LOW);  // Added this line
+  delayMicroseconds(2); // Added this line
+  digitalWrite(TRIGGER_PIN, HIGH);
+  delayMicroseconds(10); // Added this line
+  digitalWrite(TRIGGER_PIN, LOW);
+  duration = pulseIn(ECHO_PIN, HIGH);
+  distance = (duration/2) / 29.1;
+  Serial.print(distance);
+  Serial.println(" cm");
+  server.handleClient();
+}
